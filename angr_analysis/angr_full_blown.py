@@ -33,7 +33,6 @@ def check_imports(proj):
     global ZWMAPVIEWOFSECTION
 
     print("\nLooking for MmMapIoSpace, ZwOpenProcess, ZwMapViewOfSection Imports..\n")
-    #logging.debug("Looking for MmMapIoSpace, ZwOpenProcess, ZwMapViewOfSection Imports..\n")
 
     mmmap_addr = proj.loader.find_symbol("MmMapIoSpace")
     zwopenprocess = proj.loader.find_symbol("ZwOpenProcess")
@@ -42,37 +41,34 @@ def check_imports(proj):
 
     if zwopenprocess:
         print("[+] Found ZwOpenProcess: ", hex(zwopenprocess.rebased_addr))
-        #logging.info("[+] Found ZwOpenProcess: %s", hex(zwopenprocess.rebased_addr))
-
         ZWOPENPROCESS = True
         import_addr['ZwOpenProcess'] = zwopenprocess.rebased_addr
-
     else:
         print("ZwOpenProcess import not found!\n")
-        #logging.info("ZwOpenProcess import not found!\n")
 
     if mmmap_addr:
         print("[+] Found MmapIoSpace: ", hex(mmmap_addr.rebased_addr))
         MMMAPIOSPACE = True
         import_addr['MmapIoSpace'] = mmmap_addr.rebased_addr
-        #logging.info("[+] Found MmapIoSpace: %s", hex(mmmap_addr.rebased_addr))
-
     else:
         print("MmMapIoSpace import not found!\n")
-        #logging.info("MmMapIoSpace import not found!\n")
 
     if zwmapview:
-
         print("[+] Found ZwMapViewOfSection: ", hex(zwmapview.rebased_addr))
         ZWMAPVIEWOFSECTION = True
         import_addr['ZwMapViewOfSection'] = zwmapview.rebased_addr
-        #logging.info("[+] Found ZwMapViewOfSection: %s", hex(zwmapview.rebased_addr))
-
     else:
         print("ZwMapViewOfSection import not found!\n")
-        #logging.info("ZwMapViewOfSection import not found!\n")
+
+    # 🆕 NEW: check for additional dangerous primitives
+    for api in ("ZwTerminateProcess", "ZwLoadDriver", "PsSetLoadImageNotifyRoutine", "KeServiceDescriptorTable"):
+        sym = proj.loader.find_symbol(api)
+        if sym:
+            print(f"[+] Found {api}: 0x{sym.rebased_addr:x}")
+            import_addr[api] = sym.rebased_addr
 
     return import_addr
+
 
 
 def find_driver_type(proj):
